@@ -1,0 +1,83 @@
+Route of Destruction (Rod)
+==========================
+
+Do not use this plugin.
+
+I repeat: Do not use this plugin.
+
+I will physically restrain you if you use this plugin.
+
+Ok. You can use it but there are a few things you MUST consider and probably you
+have to upgrade your controllers a bit.
+Actually I fear that afterwards you app is a bit safer than before...
+
+If you are using button_to for you destroy links this plugin is not for you.
+
+== Reasons for RouteOfDestruction (Rod)
+
+The main purpose of Rod is to allow you to use the link_to helper for a
+delete/destroy link that nicely degrades for non-javascript users to a GET request
+onto your controller's destroy method. Then the template could show a regular delete form
+that any non JS client can use.
+
+As I said: a GET request on your destroy method. THIS IS DANGEROUS!
+If you are running a RESTful application then you most likely don't have a check anymore
+wether the request is a DELETE request or a GET request. But with this plugin you'll need it
+or you'll be an easy victim to attack and destroy your data.
+
+  class PostController
+    def destroy
+      @post = Post.find(params[:id])
+      return unless request.delete? # This is the imporant line. Say it loud and repeat 100.times
+      if @post.destroy
+        flash[:notice] = "Post is gone."
+        redirect_to :action => :index and return
+      else
+        redirect_to :back and return
+      end
+    end
+  end
+
+== What else to know?
+Ok. So much for the warning. Now the easy part.
+
+First, if you run ´rake routes´ you will see a new route:
+  destroy_post GET /posts/:id/destroy(.:format) {:controller=>"posts", :action=>"destroy"}
+
+In your views you can now use this short (that will also create the necessary JS)
+  link_to t(:'posts.links.delete'), destroy_post_path(post.id), :method => :delete
+instead of the old variation that didn't work with REST anyways, only if you (idiot!) still had the
+default routes active (I'm talking about "map.connect ':controller/:action/:id'").
+  link_to t(:'posts.links.delete'), {:controller => :posts, :action => :destroy, :id => post.id}, :method => :delete
+
+The fallback form in your destroy.html.erb/.haml should look like this:
+  form_for :post, @post, :url => post_path(:id => @post.id), :html => {:method => :delete} do
+    #...
+  end 
+
+
+== Installation
+
+Did I already mention not to use this plugin?
+
+As normal plugin:
+  ./script/plugin install git://github.com/TomK32/route_of_destruction.git
+
+For the fanboys of good olde git-submodule:
+  git submodule add git://github.com/TomK32/route_of_destruction.git vendor/plugins/route_of_destruction
+
+
+== Author, Weblinks and Copyright
+
+Thomas aka TomK32 works as freelance webdeveloper in Vienna, Austria.
+Visit the blog: http://ananasblau.com
+Or the github account: http://github.com/TomK32
+
+The github repo for this plugin is: http://github.com/TomK32/route_of_destruction
+
+Copyright (c) 2009 Thomas R. "TomK32" Koll, released under the MIT license
+
+PS: Nowadays no one deletes data. You better have a state column:
+Post.update_attribute(:state => 'deleted')
+
+PPS: And do not ever again play shipmast.
